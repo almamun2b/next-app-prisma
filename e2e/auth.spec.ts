@@ -20,10 +20,23 @@ test.describe("authentication", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("client-side validation runs before submitting", async ({ page }) => {
+  test("native validation blocks empty submits before reaching the server", async ({ page }) => {
     await page.goto("/login");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page.getByText("Enter a valid email address")).toBeVisible();
+    const email = page.getByLabel("Email");
+    expect(await email.evaluate((el: HTMLInputElement) => el.validity.valueMissing)).toBe(true);
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("login works before hydration / without JavaScript", async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(ADMIN.email);
+    await page.getByLabel("Password", { exact: false }).first().fill(ADMIN.password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await context.close();
   });
 
   test("users can sign out from the account menu", async ({ page }) => {

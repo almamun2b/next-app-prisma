@@ -4,7 +4,6 @@ import { Container } from "@/components/layout/container";
 import { LogoMark } from "@/components/layout/logo";
 import { JsonLd, webPageJsonLd } from "@/components/seo/json-ld";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { buildMetadata } from "@/lib/seo";
 import { LoginForm } from "@/modules/auth/components/login-form";
 
@@ -18,28 +17,26 @@ const NOTICES: Record<string, string> = {
   "password-changed": "Your password was changed. Please sign in again.",
 };
 
-async function LoginFormLoader({ searchParams }: PageProps<"/login">) {
-  const params = await searchParams;
-  const callbackUrl = typeof params.callbackUrl === "string" ? params.callbackUrl : undefined;
-  const reason = typeof params.reason === "string" ? params.reason : undefined;
-  return <LoginForm callbackUrl={callbackUrl} notice={reason ? NOTICES[reason] : undefined} />;
-}
-
-function LoginFormSkeleton() {
+/** Optional, request-dependent notice — streamed so the form stays in the static shell. */
+async function LoginNotice({ searchParams }: Pick<PageProps<"/login">, "searchParams">) {
+  const { reason } = await searchParams;
+  const notice = typeof reason === "string" ? NOTICES[reason] : undefined;
+  if (!notice) return null;
   return (
-    <div className="grid gap-5" aria-hidden="true">
-      <Skeleton className="h-16" />
-      <Skeleton className="h-16" />
-      <Skeleton className="h-11" />
-    </div>
+    <p
+      role="status"
+      className="rounded-md border border-border bg-secondary px-3 py-2.5 text-sm text-secondary-foreground"
+    >
+      {notice}
+    </p>
   );
 }
 
-export default function LoginPage(props: PageProps<"/login">) {
+export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <Container className="flex justify-center py-16 sm:py-24">
       <JsonLd data={webPageJsonLd({ name: "Sign in", path: "/login" })} />
-      <div className="grid w-full max-w-sm animate-slide-up gap-8">
+      <div className="grid w-full max-w-sm gap-8">
         <header className="grid justify-items-center gap-4 text-center">
           <LogoMark className="size-10" />
           <div className="grid gap-1.5">
@@ -49,11 +46,13 @@ export default function LoginPage(props: PageProps<"/login">) {
             </p>
           </div>
         </header>
+        <Suspense fallback={null}>
+          <LoginNotice searchParams={searchParams} />
+        </Suspense>
         <Card>
           <CardContent>
-            <Suspense fallback={<LoginFormSkeleton />}>
-              <LoginFormLoader {...props} />
-            </Suspense>
+            {/* Static shell: the form is interactive before (and without) hydration. */}
+            <LoginForm />
           </CardContent>
         </Card>
         <p className="text-center text-xs text-muted-foreground">

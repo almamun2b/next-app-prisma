@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Components" };
 async function DesignSystemPageContent() {
   await requireUser();
   return (
-    <div className="mx-auto grid w-full max-w-5xl animate-fade-in gap-6">
+    <div className="mx-auto grid w-full max-w-5xl gap-6">
       <PageHeader
         title="Components"
         description="The reusable UI kit used across Keystone, in every state."

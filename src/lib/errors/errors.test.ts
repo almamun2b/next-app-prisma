@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { AppError, ErrorCode } from "./app-error";
 import { handleError, toAppError } from "./handle-error";
 import { normalizePrismaError, targetFields } from "./normalize-prisma";

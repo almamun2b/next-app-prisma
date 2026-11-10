@@ -15,7 +15,7 @@ async function ProfilePageContent() {
   const profile = await userService.getProfile(user);
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl animate-fade-in gap-6">
+    <div className="mx-auto grid w-full max-w-3xl gap-6">
       <PageHeader title="Profile" description="Manage your personal details and password." />
       <Card>
         <CardHeader>

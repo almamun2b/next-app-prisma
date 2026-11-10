@@ -19,7 +19,7 @@ export function StatusPage({
 }: StatusPageProps) {
   return (
     <main id="main" className="grid min-h-dvh place-items-center px-4 py-16 text-center">
-      <div className="grid max-w-md animate-slide-up justify-items-center gap-5">
+      <div className="grid max-w-md justify-items-center gap-5">
         <LogoMark className="size-10" />
         <p className="font-mono text-sm font-semibold text-primary">{code}</p>
         <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>

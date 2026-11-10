@@ -23,7 +23,7 @@ async function UsersPageContent({ searchParams }: PageProps<"/users">) {
   const to = Math.min(meta.page * meta.limit, meta.total);
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl animate-fade-in gap-6">
+    <div className="mx-auto grid w-full max-w-6xl gap-6">
       <PageHeader
         title="Users"
         description="Invite people, assign roles and control access."

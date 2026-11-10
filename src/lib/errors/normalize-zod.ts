@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { AppError, type FieldErrors } from "./app-error";
 
 /** Converts a ZodError into a 422 AppError with per-field messages. */

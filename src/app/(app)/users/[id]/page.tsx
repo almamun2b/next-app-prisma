@@ -33,7 +33,7 @@ async function UserDetailPageContent({ params }: PageProps<"/users/[id]">) {
   const user = await loadUser((await params).id);
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl animate-fade-in gap-6">
+    <div className="mx-auto grid w-full max-w-3xl gap-6">
       <Link
         href="/users"
         className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"

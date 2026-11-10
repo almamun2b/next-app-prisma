@@ -115,7 +115,7 @@ async function MemberOverview({ user }: { user: SessionUser }) {
 async function DashboardPageContent() {
   const user = await requireUser();
   return (
-    <div className="mx-auto grid w-full max-w-6xl animate-fade-in gap-8">
+    <div className="mx-auto grid w-full max-w-6xl gap-8">
       <PageHeader
         title={`Welcome back, ${user.name.split(" ")[0] ?? user.name}`}
         description={

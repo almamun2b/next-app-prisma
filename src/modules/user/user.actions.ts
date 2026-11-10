@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { signOut } from "@/auth";
 import { createAction } from "@/lib/safe-action";
 import {

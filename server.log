@@ -1,0 +1,8 @@
+$ next start
+▲ Next.js 16.4.6
+- Local:         http://localhost:3000
+- Network:       http://192.0.2.2:3000
+✓ Ready in 123ms
+✓ Running next.config.ts took 29ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+[ELIFECYCLE] Command failed.

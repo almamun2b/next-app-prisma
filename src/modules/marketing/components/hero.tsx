@@ -12,7 +12,7 @@ export function Hero() {
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[32rem] bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_oklch,var(--color-primary)_14%,transparent),transparent)]"
       />
       <Container className="grid gap-12 pt-16 pb-20 sm:pt-24 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-16">
-        <div className="grid animate-slide-up gap-6">
+        <div className="grid gap-6">
           <p className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted-foreground">
             <ShieldCheck aria-hidden="true" className="size-3.5 text-primary" />
             Role-based access, built in
@@ -44,7 +44,7 @@ export function Hero() {
               alt="Keystone users table showing names, roles, status badges and pagination"
               width={1200}
               height={800}
-              priority
+              preload
               sizes="(min-width: 1024px) 540px, 100vw"
               className="h-auto w-full"
             />

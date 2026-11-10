@@ -1,63 +1,38 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert, Mail } from "lucide-react";
-import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { applyFieldErrors } from "@/lib/forms";
-import { loginAction } from "../auth.actions";
-import { loginSchema, type LoginInput } from "../auth.schema";
+import { loginFormAction, type LoginFormState } from "../auth.actions";
 import { PasswordInput } from "./password-input";
 
-export function LoginForm({
-  callbackUrl,
-  notice,
-}: {
-  callbackUrl?: string | undefined;
-  notice?: string | undefined;
-}) {
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
-    mode: "onTouched",
-  });
+/** Optional explicit destination; defaults to the `callbackUrl` of the current page. */
+type LoginFormProps = { callbackUrl?: string | undefined };
 
-  const onSubmit = handleSubmit((values) => {
-    setFormError(null);
-    startTransition(async () => {
-      // Resolves only on failure — success redirects on the server.
-      const result = (await loginAction(values, callbackUrl)) as
-        Awaited<ReturnType<typeof loginAction>> | undefined;
-      if (!result || result.ok) return;
-      if (!applyFieldErrors(setError, result.error.fieldErrors)) setFormError(result.error.message);
-    });
-  });
+/**
+ * Progressive-enhancement login form: a native `<form action>` bound to a
+ * Server Action via `useActionState`. Works before hydration / without JS,
+ * uses native constraint validation on the client and the shared zod schema
+ * on the server — keeping validation libraries out of this public page's JS.
+ */
+export function LoginForm({ callbackUrl }: LoginFormProps) {
+  const [state, formAction, isPending] = useActionState<LoginFormState, FormData>(
+    loginFormAction,
+    null,
+  );
+  const error = state && !state.ok ? state.error : undefined;
+  const fieldErrors = error?.fieldErrors;
+  const formError = error && !fieldErrors ? error.message : undefined;
 
   return (
     <form
-      onSubmit={onSubmit}
-      noValidate
+      action={formAction}
       className="grid gap-5"
       aria-describedby={formError ? "login-error" : undefined}
     >
-      {notice && !formError ? (
-        <p
-          role="status"
-          className="rounded-md border border-border bg-secondary px-3 py-2.5 text-sm text-secondary-foreground"
-        >
-          {notice}
-        </p>
-      ) : null}
+      {callbackUrl ? <input type="hidden" name="callbackUrl" value={callbackUrl} /> : null}
       {formError ? (
         <p
           id="login-error"
@@ -69,28 +44,32 @@ export function LoginForm({
         </p>
       ) : null}
 
-      <FormField label="Email" error={errors.email?.message} required>
+      <FormField label="Email" error={fieldErrors?.email?.[0]} required>
         {(field) => (
           <Input
             {...field}
-            {...register("email")}
+            name="email"
             type="email"
+            required
             autoComplete="email"
             inputMode="email"
             placeholder="you@company.com"
+            defaultValue={state?.email ?? ""}
+            key={state?.email ?? "email"}
             startAdornment={<Mail />}
-            disabled={isPending}
+            readOnly={isPending}
           />
         )}
       </FormField>
 
-      <FormField label="Password" error={errors.password?.message} required>
+      <FormField label="Password" error={fieldErrors?.password?.[0]} required>
         {(field) => (
           <PasswordInput
             {...field}
-            {...register("password")}
+            name="password"
+            required
             autoComplete="current-password"
-            disabled={isPending}
+            readOnly={isPending}
           />
         )}
       </FormField>
