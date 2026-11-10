@@ -1,14 +1,10 @@
 import "server-only";
 import { unstable_rethrow } from "next/navigation";
 import type { z } from "zod";
-import { AppError, handleError, type ErrorCode, type FieldErrors } from "@/lib/errors";
+import type { ActionResult } from "@/lib/action-result";
+import { AppError, handleError } from "@/lib/errors";
 import { getSessionUser, isAdmin } from "@/modules/auth/auth.guard";
 import type { SessionUser } from "@/modules/auth/auth.types";
-
-/** Serializable result every server action returns to the client. */
-export type ActionResult<T = void> =
-  | { ok: true; data: T; message?: string }
-  | { ok: false; error: { code: ErrorCode; message: string; fieldErrors?: FieldErrors } };
 
 type Access = "public" | "user" | "admin";
 type ActionContext<A extends Access> = {
@@ -62,3 +58,5 @@ export function createAction<S extends z.ZodType, R, A extends Access = "user">(
     }
   };
 }
+
+export type { ActionResult };

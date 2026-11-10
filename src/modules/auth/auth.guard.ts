@@ -1,5 +1,6 @@
 import "server-only";
-import { redirect, forbidden } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 import { auth } from "@/auth";
 import { Role } from "@/generated/prisma/enums";
@@ -11,6 +12,9 @@ import type { SessionUser } from "./auth.types";
  * session. Deduplicated per request with React `cache`.
  */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  // Mark the render as request-time BEFORE Auth.js touches crypto/time APIs,
+  // so the static shell is never polluted by session-dependent values.
+  await connection();
   const session = await auth();
   return session?.user.id ? session.user : null;
 });

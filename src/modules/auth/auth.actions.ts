@@ -3,9 +3,10 @@
 import { AuthError, CredentialsSignin } from "next-auth";
 import { unstable_rethrow } from "next/navigation";
 import { signIn, signOut } from "@/auth";
+import { siteConfig } from "@/config/site";
 import { ErrorCode } from "@/lib/errors";
 import { normalizeZodError } from "@/lib/errors/normalize-zod";
-import type { ActionResult } from "@/lib/safe-action";
+import type { ActionResult } from "@/lib/action-result";
 import { LOGIN_ERROR_MESSAGES } from "./auth.errors";
 import { loginSchema, safeCallbackUrl, type LoginInput } from "./auth.schema";
 
@@ -25,7 +26,10 @@ export async function loginAction(input: LoginInput, callbackUrl?: string): Prom
   }
 
   try {
-    await signIn("credentials", { ...parsed.data, redirectTo: safeCallbackUrl(callbackUrl) });
+    await signIn("credentials", {
+      ...parsed.data,
+      redirectTo: safeCallbackUrl(callbackUrl, "/dashboard", siteConfig.url),
+    });
     return { ok: true, data: undefined };
   } catch (error) {
     unstable_rethrow(error);

@@ -84,3 +84,9 @@ export type ListUsersQuery = z.output<typeof listUsersQuerySchema>;
 
 /** Prisma `@default(cuid())` ids: lowercase alphanumerics, ~25 chars. */
 export const userIdSchema = z.string().regex(/^[a-z0-9]{20,32}$/, "Invalid user id");
+
+/** Admin edit form: same fields as create, but the password may be left blank. */
+export const editUserFormSchema = createUserSchema.extend({
+  password: z.union([passwordSchema, z.literal("")]),
+});
+export type UserFormValues = z.input<typeof createUserSchema>;

@@ -1,122 +1,246 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (next-themes sets `.dark` on <html>). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Design tokens — semantic colors as CSS variables (OKLCH).
+ * All text/background pairs meet WCAG 2.1 AA (4.5:1 body, 3:1 UI/large).
+ * See DESIGN.md for usage rules.
+ * ───────────────────────────────────────────────────────────────────────── */
 :root {
   color-scheme: light;
+  --radius: 0.625rem;
+
+  --background: oklch(0.985 0.002 95);
+  --foreground: oklch(0.2 0.012 260);
+  --surface: oklch(1 0 0);
+  --surface-foreground: var(--foreground);
+  --muted: oklch(0.955 0.004 260);
+  --muted-foreground: oklch(0.47 0.015 260);
+  --subtle: oklch(0.93 0.006 260);
+
+  --primary: oklch(0.47 0.105 196);
+  --primary-hover: oklch(0.42 0.1 196);
+  --primary-foreground: oklch(0.99 0.005 196);
+  --secondary: oklch(0.94 0.012 196);
+  --secondary-foreground: oklch(0.3 0.06 196);
+  --accent: oklch(0.95 0.008 260);
+  --accent-foreground: oklch(0.22 0.015 260);
+
+  --destructive: oklch(0.53 0.19 25);
+  --destructive-hover: oklch(0.48 0.19 25);
+  --destructive-foreground: oklch(0.99 0.005 25);
+  --success: oklch(0.5 0.12 155);
+  --success-soft: oklch(0.95 0.04 155);
+  --warning: oklch(0.55 0.12 70);
+  --warning-soft: oklch(0.96 0.05 85);
+  --danger-soft: oklch(0.96 0.03 25);
+
+  --border: oklch(0.9 0.006 260);
+  --input: oklch(0.82 0.008 260);
+  --ring: oklch(0.55 0.11 196);
+  --overlay: oklch(0.15 0.01 260 / 0.5);
 }
 
-* {
-  box-sizing: border-box;
+.dark {
+  color-scheme: dark;
+
+  --background: oklch(0.17 0.008 260);
+  --foreground: oklch(0.95 0.005 260);
+  --surface: oklch(0.21 0.01 260);
+  --surface-foreground: var(--foreground);
+  --muted: oklch(0.25 0.01 260);
+  --muted-foreground: oklch(0.72 0.012 260);
+  --subtle: oklch(0.28 0.012 260);
+
+  --primary: oklch(0.76 0.11 192);
+  --primary-hover: oklch(0.81 0.1 192);
+  --primary-foreground: oklch(0.2 0.03 200);
+  --secondary: oklch(0.29 0.03 196);
+  --secondary-foreground: oklch(0.9 0.04 192);
+  --accent: oklch(0.27 0.012 260);
+  --accent-foreground: oklch(0.95 0.005 260);
+
+  --destructive: oklch(0.68 0.17 25);
+  --destructive-hover: oklch(0.73 0.16 25);
+  --destructive-foreground: oklch(0.18 0.03 25);
+  --success: oklch(0.75 0.13 155);
+  --success-soft: oklch(0.3 0.05 155);
+  --warning: oklch(0.8 0.12 80);
+  --warning-soft: oklch(0.32 0.05 80);
+  --danger-soft: oklch(0.3 0.06 25);
+
+  --border: oklch(0.3 0.01 260);
+  --input: oklch(0.42 0.012 260);
+  --ring: oklch(0.74 0.11 192);
+  --overlay: oklch(0.05 0 0 / 0.65);
 }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  background: #fff;
-  color: #111;
+/* Map variables → Tailwind utilities (bg-primary, text-muted-foreground, …). */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-.shell {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
-}
+@theme {
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --animate-fade-in: fade-in 180ms var(--ease-out-quart);
+  --animate-slide-up: slide-up 220ms var(--ease-out-quart);
+  --animate-toast-in: toast-in 260ms var(--ease-out-quart);
 
-.hero {
-  margin-bottom: 1.5rem;
-}
-
-.eyebrow {
-  margin: 0 0 0.5rem;
-  color: #666;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-h1 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.lede {
-  margin: 0.5rem 0 0;
-  color: #666;
-  font-size: 0.875rem;
-  line-height: 1.6;
-}
-
-.panel {
-  border: 1px solid #e5e5e5;
-  border-radius: 0.5rem;
-  padding: 1rem;
-}
-
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-h2 {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.panelHeader span,
-.empty,
-time {
-  color: #888;
-  font-size: 0.8rem;
-}
-
-.panel p {
-  color: #666;
-  font-size: 0.8rem;
-}
-
-.users {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.5rem;
-}
-
-.users li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #eee;
-  border-radius: 0.375rem;
-}
-
-.users p {
-  margin: 0.125rem 0 0;
-}
-
-time {
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-code {
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-  background: #f5f5f5;
-  font-family: SFMono-Regular, Consolas, monospace;
-  font-size: 0.875em;
-}
-
-@media (max-width: 640px) {
-  .users li,
-  .panelHeader {
-    flex-direction: column;
-    align-items: flex-start;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
   }
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  ::selection {
+    @apply bg-primary/20;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* Native <dialog> + popover entry/exit animation (no JS animation library). */
+@layer components {
+  dialog[data-modal] {
+    transition:
+      opacity 180ms var(--ease-out-quart),
+      transform 180ms var(--ease-out-quart),
+      overlay 180ms allow-discrete,
+      display 180ms allow-discrete;
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  dialog[data-modal][open] {
+    opacity: 1;
+    transform: none;
+  }
+  @starting-style {
+    dialog[data-modal][open] {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+  }
+  dialog[data-modal]::backdrop {
+    background: var(--overlay);
+    backdrop-filter: blur(2px);
+    transition:
+      opacity 180ms,
+      overlay 180ms allow-discrete,
+      display 180ms allow-discrete;
+    opacity: 0;
+  }
+  dialog[data-modal][open]::backdrop {
+    opacity: 1;
+  }
+  @starting-style {
+    dialog[data-modal][open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  [popover][data-menu] {
+    transition:
+      opacity 140ms var(--ease-out-quart),
+      transform 140ms var(--ease-out-quart),
+      overlay 140ms allow-discrete,
+      display 140ms allow-discrete;
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  [popover][data-menu]:popover-open {
+    opacity: 1;
+    transform: none;
+  }
+  @starting-style {
+    [popover][data-menu]:popover-open {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 160ms;
 }

@@ -26,14 +26,31 @@ function isKnownRequestError(error: Error): error is PrismaKnownRequestError {
   return error.name === "PrismaClientKnownRequestError" && "code" in error;
 }
 
-/** Extracts the offending field names of a unique/foreign-key violation. */
-function targetFields(meta: Record<string, unknown> | undefined): string[] {
-  const target =
-    meta?.target ??
-    (meta?.driverAdapterError as { cause?: { constraint?: { fields?: unknown } } } | undefined)
-      ?.cause?.constraint?.fields;
+type DriverAdapterCause = {
+  table?: string;
+  constraint?: { fields?: string[]; index?: string };
+};
+
+/**
+ * Extracts the offending field names of a unique/foreign-key violation.
+ * Classic engine: `meta.target`. Driver adapters (Prisma 7): `meta.driverAdapterError.cause`
+ * with either `constraint.fields` or an index name like `User_email_key`.
+ */
+export function targetFields(meta: Record<string, unknown> | undefined): string[] {
+  const target = meta?.target;
   if (Array.isArray(target)) return target.map(String);
   if (typeof target === "string") return [target];
+
+  const cause = (meta?.driverAdapterError as { cause?: DriverAdapterCause } | undefined)?.cause;
+  if (cause?.constraint?.fields?.length) return cause.constraint.fields.map(String);
+  const index = cause?.constraint?.index;
+  if (index) {
+    const withoutTable = cause.table ? index.replace(new RegExp(`^${cause.table}_`), "") : index;
+    return withoutTable
+      .replace(/_(key|fkey|idx)$/, "")
+      .split("_")
+      .filter(Boolean);
+  }
   return [];
 }
 

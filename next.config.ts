@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const root = import.meta.dirname;
 const isDev = process.env.NODE_ENV !== "production";
+const isHttps = (process.env.APP_URL ?? "").startsWith("https://");
 
 /**
  * Content Security Policy.
@@ -20,7 +21,7 @@ const csp = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  ...(isDev ? [] : ["upgrade-insecure-requests"]),
+  ...(isHttps ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const securityHeaders = [
