@@ -2,6 +2,17 @@
   "mcpServers": {
     "prisma": {
       "url": "https://mcp.prisma.io/mcp"
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }

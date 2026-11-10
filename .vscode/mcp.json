@@ -3,6 +3,20 @@
     "prisma": {
       "type": "http",
       "url": "https://mcp.prisma.io/mcp"
+    },
+    "next-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }

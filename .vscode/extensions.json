@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "Prisma.prisma",
+    "vitest.explorer",
+    "ms-playwright.playwright",
+    "deque-systems.vscode-axe-linter",
+    "yoavbls.pretty-ts-errors",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}
