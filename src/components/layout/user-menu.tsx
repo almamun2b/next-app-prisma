@@ -33,10 +33,10 @@ export function UserMenu({ user }: { user: SessionUser }) {
         ref={triggerRef}
         type="button"
         popoverTarget={id}
-        aria-label={`Account menu for ${user.name}`}
         className="inline-flex cursor-pointer items-center gap-2 rounded-full p-0.5 pr-2 transition-colors hover:bg-accent"
       >
         <Avatar name={user.name} src={user.image} size="sm" />
+        <span className="sr-only">Account menu for {user.name}</span>
         <ChevronDown aria-hidden="true" className="size-4 text-muted-foreground" />
       </button>
       <div

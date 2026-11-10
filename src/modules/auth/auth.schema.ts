@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z.email("Enter a valid email address").trim().toLowerCase(),
+  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
   password: z.string().min(1, "Enter your password").max(72),
 });
 export type LoginInput = z.input<typeof loginSchema>;

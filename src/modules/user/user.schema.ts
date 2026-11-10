@@ -21,7 +21,11 @@ const nameSchema = z
   .trim()
   .min(2, "Name must be at least 2 characters")
   .max(80, "Name must be at most 80 characters");
-const emailSchema = z.email("Enter a valid email address").trim().toLowerCase().max(254);
+const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.email("Enter a valid email address").max(254));
 
 export const createUserSchema = z.object({
   name: nameSchema,

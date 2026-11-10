@@ -33,7 +33,7 @@
   --destructive-foreground: oklch(0.99 0.005 25);
   --success: oklch(0.5 0.12 155);
   --success-soft: oklch(0.95 0.04 155);
-  --warning: oklch(0.55 0.12 70);
+  --warning: oklch(0.47 0.11 62);
   --warning-soft: oklch(0.96 0.05 85);
   --danger-soft: oklch(0.96 0.03 25);
 

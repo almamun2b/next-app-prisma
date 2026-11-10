@@ -39,22 +39,22 @@ async function assertNotLastAdmin(target: { role: Role; isActive: boolean }) {
  * controllers, Server Actions and Server Components alike.
  */
 export const userService = {
-  list(actor: Actor, query: ListUsersQuery) {
+  async list(actor: Actor, query: ListUsersQuery) {
     assertAdmin(actor);
     return userRepository.list(query);
   },
 
-  stats(actor: Actor) {
+  async stats(actor: Actor) {
     assertAdmin(actor);
     return userRepository.stats();
   },
 
-  recent(actor: Actor, limit?: number) {
+  async recent(actor: Actor, limit?: number) {
     assertAdmin(actor);
     return userRepository.recent(limit);
   },
 
-  getById(actor: Actor, id: string) {
+  async getById(actor: Actor, id: string) {
     if (actor.id !== id) assertAdmin(actor);
     return getOrThrow(id);
   },
@@ -101,11 +101,11 @@ export const userService = {
 
   /* ── Self-service ──────────────────────────────────────────────────── */
 
-  getProfile(actor: Actor) {
+  async getProfile(actor: Actor) {
     return getOrThrow(actor.id);
   },
 
-  updateProfile(actor: Actor, input: Required<UpdateProfileInput>) {
+  async updateProfile(actor: Actor, input: Required<UpdateProfileInput>) {
     return userRepository.update(actor.id, { name: input.name });
   },
 
