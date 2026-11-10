@@ -1,10 +1,10 @@
 import {
+  Accessibility,
   Gauge,
   KeyRound,
   ListFilter,
   MonitorSmartphone,
   UserCog,
-  Accessibility,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 
@@ -48,24 +48,28 @@ export function Features() {
       aria-labelledby="features-title"
       className="scroll-mt-20 border-t border-border bg-surface py-20 sm:py-24"
     >
-      <Container className="grid gap-12">
-        <header className="grid max-w-2xl gap-3">
+      <Container className="grid gap-12 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-16">
+        <header className="grid content-start gap-3 lg:sticky lg:top-28">
           <p className="text-sm font-semibold text-primary">Features</p>
           <h2 id="features-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Everything an admin needs. Nothing they don&apos;t.
           </h2>
+          <p className="text-muted-foreground">
+            One console for the whole account lifecycle, built on server-rendered pages and a strict
+            access model.
+          </p>
         </header>
-        <ul className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="grid divide-y divide-border border-y border-border">
           {FEATURES.map(({ icon: Icon, title, body }) => (
-            <li key={title} className="grid content-start gap-3">
-              <span className="inline-flex size-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
-                <Icon aria-hidden="true" className="size-5" />
-              </span>
-              <h3 className="text-base font-semibold">{title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
-            </li>
+            <div key={title} className="grid gap-2 py-6 sm:grid-cols-[14rem_1fr] sm:gap-8">
+              <dt className="flex items-center gap-2.5 font-semibold">
+                <Icon aria-hidden="true" className="size-4.5 shrink-0 text-primary" />
+                {title}
+              </dt>
+              <dd className="text-sm leading-relaxed text-muted-foreground">{body}</dd>
+            </div>
           ))}
-        </ul>
+        </dl>
       </Container>
     </section>
   );

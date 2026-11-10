@@ -53,6 +53,8 @@ opencode.jsonc
 # impeccable local state
 /.impeccable/*.local.json
 /.impeccable/hook.*.json
+# impeccable engine binary is platform-specific; fetch with `npx impeccable update`
+.claude/skills/impeccable/scripts/bin/
 
 # playwright
 /test-results/
