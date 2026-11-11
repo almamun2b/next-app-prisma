@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { requireUser } from "@/modules/auth/auth.guard";
 import { ChangePasswordForm } from "@/modules/user/components/change-password-form";
 import { ProfileForm } from "@/modules/user/components/profile-form";
-import { userService } from "@/modules/user/user.service";
+import { usersApi } from "@/modules/user/user.api";
 
 export const metadata: Metadata = { title: "Profile" };
 
 async function ProfilePageContent() {
-  const user = await requireUser();
-  const profile = await userService.getProfile(user);
+  await requireUser(); // page gate; the data below is fetched over the API
+  const profile = await usersApi.me();
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-6">

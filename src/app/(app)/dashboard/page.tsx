@@ -9,15 +9,14 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { isAdmin, requireUser } from "@/modules/auth/auth.guard";
-import type { SessionUser } from "@/modules/auth/auth.types";
 import { RoleBadge, StatusBadge } from "@/modules/user/components/user-badges";
 import { StatCard } from "@/modules/user/components/stat-card";
-import { userService } from "@/modules/user/user.service";
+import { usersApi } from "@/modules/user/user.api";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-async function AdminOverview({ user }: { user: SessionUser }) {
-  const [stats, recent] = await Promise.all([userService.stats(user), userService.recent(user, 5)]);
+async function AdminOverview() {
+  const [stats, recent] = await Promise.all([usersApi.stats(), usersApi.recent(5)]);
   return (
     <>
       <section aria-label="User statistics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -73,8 +72,8 @@ async function AdminOverview({ user }: { user: SessionUser }) {
   );
 }
 
-async function MemberOverview({ user }: { user: SessionUser }) {
-  const profile = await userService.getProfile(user);
+async function MemberOverview() {
+  const profile = await usersApi.me();
   return (
     <Card>
       <CardHeader>
@@ -124,7 +123,7 @@ async function DashboardPageContent() {
             : "Here's an overview of your account."
         }
       />
-      {isAdmin(user) ? <AdminOverview user={user} /> : <MemberOverview user={user} />}
+      {isAdmin(user) ? <AdminOverview /> : <MemberOverview />}
     </div>
   );
 }

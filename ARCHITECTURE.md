@@ -1,6 +1,6 @@
 # Architecture
 
-Keystone is a full-stack Next.js 16 application organised as a **modular MVC** codebase. Every request — whether it arrives as a Server Component render, a Server Action or a REST call — flows through the same service and repository layers.
+Keystone is a full-stack Next.js 16 application organised as a **modular MVC** codebase. On this branch every data access — whether it starts as a Server Component render, a Server Action or an external REST call — enters through the same **REST Route Handlers** and then flows through the service and repository layers.
 
 ## Directory map
 
@@ -27,29 +27,40 @@ src/
 
 ## Layers
 
-| Layer             | File                                      | Responsibility                                                                                     | May import                          |
-| ----------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Model (data)      | `*.repository.ts`                         | All Prisma access; `publicUserSelect` allowlist; list queries via `query-builder-prisma`           | `@/lib/prisma`                      |
-| Model (contract)  | `*.schema.ts`, `*.dto.ts`                 | zod input schemas (shared client/server), safe output types                                        | `@/lib/zod`                         |
-| Service           | `*.service.ts`                            | Business rules, authorization policy, invariants (last admin, self-protection, session revocation) | repository, `AppError`, password    |
-| Controller (HTTP) | `*.controller.ts` → `app/api/**/route.ts` | Authenticate → parse/validate → service → `apiOk`                                                  | service, guard, `withRouteHandler`  |
-| Controller (RPC)  | `*.actions.ts` (`"use server"`)           | Same as above for client events; returns `ActionResult`                                            | service, `createAction`             |
-| View              | `components/`, `app/**/page.tsx`          | Server Components read via services; client components call actions                                | services (server), actions (client) |
+> **Branch `feat/strict-http-api`.** In this variant the REST API is the _only_ door to the business layer. The view layer (pages, Server Components, Server Actions) talks to it over HTTP through a server-only client. The alternative (`dev`) calls the same services directly in-process.
 
-Rules: only repositories import Prisma; client code never `fetch`es app APIs; pages and actions never contain business rules.
+| Layer             | File                                      | Responsibility                                                                                      | May import                         |
+| ----------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Model (data)      | `*.repository.ts`                         | All Prisma access; `publicUserSelect` allowlist; list queries via `query-builder-prisma`            | `@/lib/prisma`                     |
+| Model (contract)  | `*.schema.ts`, `*.dto.ts`                 | zod input schemas (shared client/server), safe output types                                         | `@/lib/zod`                        |
+| Service           | `*.service.ts`                            | Business rules, authorization policy, invariants (last admin, self-protection, session revocation)  | repository, `AppError`, password   |
+| Controller (HTTP) | `*.controller.ts` → `app/api/**/route.ts` | Authenticate → parse/validate → service → `apiOk`. **Sole caller of services.**                     | service, guard, `withRouteHandler` |
+| Gateway           | `*.api.ts` + `lib/http/api-client.ts`     | Typed, server-only HTTP client for the REST API (cookie forwarding, error rehydration)              | `apiRequest`                       |
+| Controller (RPC)  | `*.actions.ts` (`"use server"`)           | Gate + validate (`createAction`), then perform the work through the gateway; returns `ActionResult` | gateway, `createAction`            |
+| View              | `components/`, `app/**/page.tsx`          | Server Components read through the gateway; client components call actions                          | gateway (server), actions (client) |
+
+Enforced by ESLint (`no-restricted-imports`): pages, layouts, components, hooks, actions and gateways cannot import `*.service`, `*.repository` or `@/lib/prisma`. Client code never `fetch`es app APIs.
 
 ## Request flows
 
 ```
-Browser ──GET page──▶ proxy.ts (JWT check, redirects) ──▶ Server Component
-                                                          └─▶ requireUser()/requireAdmin() ─▶ service ─▶ repository ─▶ Prisma
-Browser ──click/form──▶ Server Action (createAction: auth → zod → handler) ─▶ service ─▶ repository
+Browser ──GET page──▶ proxy.ts (JWT check) ──▶ Server Component
+                                               └─▶ requireUser()/requireAdmin() (page gate)
+                                               └─▶ usersApi.* ──HTTP (server→server, cookie forwarded)──▶ app/api/users/** ─▶ userController ─▶ service ─▶ repository ─▶ Prisma
+Browser ──click/form──▶ Server Action (createAction: gate → zod) ─▶ usersApi.* ──HTTP──▶ Route Handler ─▶ … ─▶ Prisma
                          └─▶ ActionResult {ok,data|error} ─▶ useServerAction (toast, field errors) + revalidatePath
-API client ──REST──▶ app/api/users/route.ts ─▶ userController (withRouteHandler) ─▶ service ─▶ repository
-                         └─▶ { success, data, meta } | { success:false, error:{ code, message, details } }
+External client ──REST──▶ the same Route Handlers: { success, data, meta } | { success:false, error:{ code, message, details } }
 ```
 
-The REST API (`/api/users*`) exposes the same capabilities to external/HTTP clients; the web UI uses Server Components and Server Actions over the shared service layer (no extra network hop, no cookie forwarding, compatible with static prerendering).
+How the server-side HTTP hop works (`src/lib/http/api-client.ts`):
+
+- Target is `INTERNAL_API_URL` (default `http://localhost:$PORT`): loopback, never the public URL, never derived from the request's `Host` header (no SSRF/host-header trust).
+- The incoming `cookie` header is forwarded, so the Route Handler authenticates the _same_ session as the page. Requests use `cache: "no-store"`.
+- Failures are re-thrown as `AppError` with the API's status, `code` and `details.fieldErrors`, so the existing page error handling and `ActionResult` mapping work unchanged. An unreachable API becomes `503 SERVICE_UNAVAILABLE`; a non-JSON reply is a non-operational error.
+- JSON dates are revived into `Date` in `user.api.ts` (`reviveUser`).
+- Every Route Handler awaits `connection()` first (`withRouteHandler`), so APIs are always request-time under Cache Components.
+
+Trade-offs vs. the in-process variant: one extra loopback request per read/mutation (the API route re-reads the session and re-runs its checks). Measured locally on a production build (median of 15 requests): `/users` renders in ≈44 ms in-process vs ≈57 ms over HTTP (≈+12 ms per API call; pages with several calls, like the admin dashboard, pay it per call), the app must be able to reach itself (set `INTERNAL_API_URL` if `PORT`/host differ), and authorization is evaluated twice (page gate + API) — which is the point: the API is the single enforcement boundary.
 
 ## Error handling
 
@@ -59,6 +70,7 @@ The REST API (`/api/users*`) exposes the same capabilities to external/HTTP clie
   - Prisma errors by **error code** (`normalize-prisma.ts`): `P2002` → 409 with offending fields (supports driver-adapter `constraint.index`), `P2025/P2001/P2018` → 404, `P2003/P2014` → 409, `P2000/P2006/P2007/P2011–P2013` → 400, `P2024/P1001/P1002/P1008` and init/panic → 503, validation → 400
   - malformed JSON → 400, anything else → 500
   - Non-operational errors are logged; in production 5xx messages are replaced by a generic one.
+- API errors cross the HTTP hop intact: the gateway rebuilds an `AppError` from the JSON envelope, so `createAction` and the page error boundaries treat them like in-process errors.
 - Boundaries: `withRouteHandler` (Route Handlers), `createAction` (Server Actions, re-throws framework redirects via `unstable_rethrow`), `app/error.tsx` and `app/global-error.tsx` (rendering), `not-found.tsx`, `forbidden.tsx`, `unauthorized.tsx` (`authInterrupts`).
 
 ## Authentication & sessions
@@ -84,11 +96,11 @@ The REST API (`/api/users*`) exposes the same capabilities to external/HTTP clie
 
 ## Testing
 
-| Suite       | Location             | Tooling                                                                                      |
-| ----------- | -------------------- | -------------------------------------------------------------------------------------------- |
-| Unit        | `src/**/*.test.ts`   | Vitest (node): errors, schemas, services (mocked repository), utils                          |
-| Component   | `src/**/*.test.tsx`  | Vitest + jsdom + Testing Library + user-event                                                |
-| Integration | `tests/integration/` | Vitest against a real PostgreSQL test DB: route handlers and Server Actions (session mocked) |
-| E2E         | `e2e/`               | Playwright (desktop + mobile) with axe-core WCAG 2.1 AA scans, admin/member storage states   |
+| Suite       | Location             | Tooling                                                                                                                                                                                   |
+| ----------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit        | `src/**/*.test.ts`   | Vitest (node): errors, schemas, services (mocked repository), utils                                                                                                                       |
+| Component   | `src/**/*.test.tsx`  | Vitest + jsdom + Testing Library + user-event                                                                                                                                             |
+| Integration | `tests/integration/` | Vitest against a real PostgreSQL test DB: route handlers, and Server Actions run end-to-end through the real handlers via an in-process `fetch` bridge (`http-bridge.ts`; session mocked) |
+| E2E         | `e2e/`               | Playwright (desktop + mobile) with axe-core WCAG 2.1 AA scans, admin/member storage states                                                                                                |
 
 CI (`.github/workflows/test.yml`) runs Vitest with coverage and Playwright against PostgreSQL 16. Lint, formatting and type-checking run locally in husky hooks.

@@ -10,15 +10,15 @@ import { CreateUserButton } from "@/modules/user/components/create-user-button";
 import { UserFilters } from "@/modules/user/components/user-filters";
 import { UsersTable } from "@/modules/user/components/users-table";
 import { listUsersQuerySchema } from "@/modules/user/user.schema";
-import { userService } from "@/modules/user/user.service";
+import { usersApi } from "@/modules/user/user.api";
 import { usersHref } from "@/modules/user/user.url";
 
 export const metadata: Metadata = { title: "Users" };
 
 async function UsersPageContent({ searchParams }: PageProps<"/users">) {
-  const admin = await requireAdmin();
+  await requireAdmin(); // page gate; the data below is fetched over the API
   const query = listUsersQuerySchema.parse(await searchParams);
-  const { data: users, meta } = await userService.list(admin, query);
+  const { data: users, meta } = await usersApi.list(query);
   const from = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;
   const to = Math.min(meta.page * meta.limit, meta.total);
 

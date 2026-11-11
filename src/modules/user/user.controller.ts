@@ -3,6 +3,7 @@ import { apiNoContent, apiOk, parseJsonBody, parseSearchParams } from "@/lib/htt
 import { withRouteHandler } from "@/lib/http/with-route-handler";
 import { authenticate, authenticateAdmin } from "@/modules/auth/auth.guard";
 import {
+  changePasswordSchema,
   createUserSchema,
   listUsersQuerySchema,
   updateProfileSchema,
@@ -68,5 +69,19 @@ export const userController = {
     const actor = await authenticate();
     const input = await parseJsonBody(request, updateProfileSchema);
     return apiOk(await userService.updateProfile(actor, input));
+  }),
+
+  /** GET /api/users/stats */
+  stats: withRouteHandler(async () => {
+    const actor = await authenticateAdmin();
+    return apiOk(await userService.stats(actor));
+  }),
+
+  /** POST /api/users/me/password — also revokes the caller's sessions. */
+  changePassword: withRouteHandler(async (request) => {
+    const actor = await authenticate();
+    const input = await parseJsonBody(request, changePasswordSchema);
+    await userService.changePassword(actor, input);
+    return apiNoContent();
   }),
 };

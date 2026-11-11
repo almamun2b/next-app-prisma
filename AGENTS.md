@@ -33,10 +33,10 @@ Integration tests need a database whose URL contains `test` (`.env.test` → `ne
 
 ## Non-negotiable rules
 
-1. **Layering (modular MVC).** `src/modules/<module>/` owns everything for a feature:
-   `*.schema.ts` (zod, shared client/server) → `*.repository.ts` (**the only place that imports `@/lib/prisma`**) → `*.service.ts` (business rules + authorization) → controllers: `*.controller.ts` (Route Handlers) and `*.actions.ts` (Server Actions) → `components/` (views).
-   Pages, components, actions and controllers never touch Prisma directly.
-2. **No client-side API calls.** Client components never `fetch` app APIs and never use `SessionProvider`. Mutations go through Server Actions (`useServerAction` hook or `<form action>`); reads happen in Server Components. Filters/pagination change the URL, not data.
+1. **Layering (modular MVC, strict HTTP).** `src/modules/<module>/` owns everything for a feature:
+   `*.schema.ts` (zod, shared client/server) → `*.repository.ts` (**the only place that imports `@/lib/prisma`**) → `*.service.ts` (business rules + authorization) → `*.controller.ts` (Route Handlers, **the only callers of services**) → `*.api.ts` (typed server-only HTTP gateway) → `*.actions.ts` / pages / `components/` (views).
+   **Pages, layouts, components, hooks and Server Actions never import a service, repository or Prisma** (ESLint `no-restricted-imports` enforces it). They read and write through the module's `*.api.ts` gateway (`usersApi`), which calls `/api/**` over HTTP on the server.
+2. **No client-side API calls.** Client components never `fetch` app APIs and never use `SessionProvider`; the HTTP hop to `/api/**` happens on the **server** (`src/lib/http/api-client.ts`, cookie forwarded). Mutations go through Server Actions (`useServerAction` hook or `<form action>`); reads happen in Server Components. Filters/pagination change the URL, not data. New capability = new Route Handler + controller method + gateway method.
 3. **Every mutation is validated and authorized on the server**: wrap Server Actions with `createAction` (`src/lib/safe-action.ts`) and Route Handlers with `withRouteHandler` (`src/lib/http/with-route-handler.ts`). Services re-check roles (defence in depth). Throw `AppError` (`src/lib/errors`) — never return ad-hoc error shapes.
 4. **Auth reads only through the DAL** `src/modules/auth/auth.guard.ts` (`getSessionUser`, `requireUser`, `requireAdmin`, `authenticate`, `authenticateAdmin`). Session reads must sit inside a `<Suspense>` boundary (Cache Components); every app page owns its own boundary.
 5. **Size limits (ESLint-enforced):** functions ≤ **150** lines, component files (`*.tsx`) ≤ **200** lines. Split into sub-components/hooks instead of disabling the rule.

@@ -5,7 +5,7 @@ A production-grade, full-stack user management system: **Next.js 16** (App Route
 - Admin-only user directory: search, filter, sort, paginate, create, edit, (de)activate, delete
 - Role-based access (ADMIN / USER), instant session revocation, rate-limited login
 - Server-rendered everywhere (static shell + streaming); no client-side API calls
-- REST API (`/api/users`, `/api/users/[id]`, `/api/users/me`) sharing the same service layer
+- **Strict-HTTP architecture (this branch):** pages and Server Actions read/write only through the REST API (`/api/users*`) via a server-only client, so Route Handlers are the single entry point to the business layer
 - WCAG 2.1 AA, SEO (metadata, sitemap, robots, JSON-LD, OG image), strict security headers
 - Unit, component, integration and E2E (with axe) test suites
 
@@ -55,4 +55,4 @@ pnpm build && pnpm test:e2e                  # end-to-end with accessibility sca
 
 ## Deployment
 
-`output: "standalone"` is enabled. Build with `pnpm build`, run migrations with `pnpm db:deploy`, then serve `node .next/standalone/server.js` (copy `public/` and `.next/static/` alongside) or `pnpm start`. Set `APP_URL` to the public HTTPS origin (enables `upgrade-insecure-requests`), `AUTH_URL`, `AUTH_SECRET`, `DATABASE_URL`. Replace the in-memory login rate limiter with a shared store when running multiple instances.
+`output: "standalone"` is enabled. Build with `pnpm build`, run migrations with `pnpm db:deploy`, then serve `node .next/standalone/server.js` (copy `public/` and `.next/static/` alongside) or `pnpm start`. Set `APP_URL` to the public HTTPS origin (enables `upgrade-insecure-requests`), `AUTH_URL`, `AUTH_SECRET`, `DATABASE_URL`. The server must be able to reach its own API: by default `http://localhost:$PORT`; set `INTERNAL_API_URL` when the app listens elsewhere (e.g. `http://127.0.0.1:8080`). Replace the in-memory login rate limiter with a shared store when running multiple instances.

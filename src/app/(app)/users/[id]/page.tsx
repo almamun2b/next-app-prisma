@@ -13,16 +13,16 @@ import { DeleteUserButton } from "@/modules/user/components/delete-user-button";
 import { RoleBadge, StatusBadge } from "@/modules/user/components/user-badges";
 import { UserForm } from "@/modules/user/components/user-form";
 import { userIdSchema } from "@/modules/user/user.schema";
-import { userService } from "@/modules/user/user.service";
+import { usersApi } from "@/modules/user/user.api";
 
 export const metadata: Metadata = { title: "Edit user" };
 
 async function loadUser(rawId: string) {
-  const admin = await requireAdmin();
+  await requireAdmin(); // page gate; the data below is fetched over the API
   const id = userIdSchema.safeParse(rawId);
   if (!id.success) notFound();
   try {
-    return await userService.getById(admin, id.data);
+    return await usersApi.get(id.data);
   } catch (error) {
     if (isAppError(error) && error.statusCode === 404) notFound();
     throw error;

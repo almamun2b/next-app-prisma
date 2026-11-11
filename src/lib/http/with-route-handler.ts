@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import { connection, type NextRequest } from "next/server";
 import { handleError } from "@/lib/errors";
 import { apiError } from "./api-response";
 
@@ -16,6 +16,10 @@ type Handler<P extends Params> = (
  */
 export function withRouteHandler<P extends Params = Params>(handler: Handler<P>): Handler<P> {
   return async (request, context) => {
+    // API responses are always request-time (authenticated, uncached). Awaited
+    // OUTSIDE the try/catch so Next's end-of-prerender signal is never mistaken
+    // for an application error (Cache Components).
+    await connection();
     try {
       return await handler(request, context);
     } catch (error) {

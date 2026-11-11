@@ -1,7 +1,9 @@
 import "./mocks";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { DELETE, GET as GET_ONE, PATCH } from "@/app/api/users/[id]/route";
+import { POST as CHANGE_PASSWORD } from "@/app/api/users/me/password/route";
 import { GET as GET_ME } from "@/app/api/users/me/route";
+import { GET as GET_STATS } from "@/app/api/users/stats/route";
 import { GET, POST } from "@/app/api/users/route";
 import { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
@@ -163,5 +165,43 @@ describe("/api/users/[id] and /api/users/me", () => {
     signInAs(session);
     const res = await GET_ONE(jsonRequest("/api/users/bad", "GET"), routeContext({ id: "bad" }));
     expect(res.status).toBe(422);
+  });
+  it("serves directory statistics to admins only", async () => {
+    const { session } = await createUser({ role: Role.ADMIN });
+    await createUser();
+    await createUser({ isActive: false });
+    signInAs(session);
+    const res = await GET_STATS(jsonRequest("/api/users/stats", "GET"), routeContext({}));
+    expect((await json(res)).data).toEqual({ total: 3, active: 2, inactive: 1, admins: 1 });
+
+    const { session: member } = await createUser();
+    signInAs(member);
+    expect((await GET_STATS(jsonRequest("/api/users/stats", "GET"), routeContext({}))).status).toBe(
+      403,
+    );
+  });
+
+  it("changes the caller's password (204) and rejects a wrong current password (422)", async () => {
+    const { user, session } = await createUser({ password: "Old1!Passw0rd" });
+    signInAs(session);
+    const bad = await CHANGE_PASSWORD(
+      jsonRequest("/api/users/me/password", "POST", {
+        currentPassword: "x",
+        newPassword: "N3w!Passw0rd",
+        confirmPassword: "N3w!Passw0rd",
+      }),
+      routeContext({}),
+    );
+    expect(bad.status).toBe(422);
+    const ok = await CHANGE_PASSWORD(
+      jsonRequest("/api/users/me/password", "POST", {
+        currentPassword: "Old1!Passw0rd",
+        newPassword: "N3w!Passw0rd",
+        confirmPassword: "N3w!Passw0rd",
+      }),
+      routeContext({}),
+    );
+    expect(ok.status).toBe(204);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).tokenVersion).toBe(1);
   });
 });

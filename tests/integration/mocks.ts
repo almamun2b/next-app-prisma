@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import { installApiBridge } from "./http-bridge";
 
 /** Shared module mocks for integration tests (import first in each test file). */
 vi.mock("@/auth", async () => {
@@ -16,3 +17,11 @@ vi.mock("next/cache", async (importOriginal) => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
 }));
+
+// Server Actions call the API through `apiRequest`, which reads the incoming cookie.
+vi.mock("next/headers", () => ({
+  headers: () => Promise.resolve(new Headers({ cookie: "authjs.session-token=integration-test" })),
+  cookies: () => Promise.resolve({ get: () => undefined }),
+}));
+
+installApiBridge();

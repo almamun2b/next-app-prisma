@@ -3,12 +3,16 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import {
+  changePasswordAction,
   createUserAction,
+  deleteUserAction,
   setUserStatusAction,
   updateProfileAction,
   updateUserAction,
 } from "@/modules/user/user.actions";
 import { createUser, resetDatabase, signInAs } from "./helpers";
+import { signOut } from "@/auth";
+import { verifyPassword } from "@/lib/password";
 
 describe("user server actions", () => {
   beforeEach(async () => {
@@ -83,5 +87,56 @@ describe("user server actions", () => {
     const result = await updateProfileAction({ name: "  New Name  " });
     expect(result.ok).toBe(true);
     expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe("New Name");
+  });
+  it("surfaces API conflicts as field errors through the HTTP layer", async () => {
+    const { session, user } = await createUser({ role: Role.ADMIN });
+    signInAs(session);
+    const result = await createUserAction({
+      name: "Dup User",
+      email: user.email,
+      password: "Str0ng!Pass",
+      role: "USER",
+      isActive: true,
+    });
+    expect(result).toMatchObject({ ok: false, error: { code: "CONFLICT" } });
+    if (!result.ok) expect(result.error.fieldErrors).toHaveProperty("email");
+  });
+
+  it("maps API 404 and 403 errors to action results", async () => {
+    const { session } = await createUser({ role: Role.ADMIN });
+    signInAs(session);
+    const missing = await deleteUserAction({ id: "abcdefghijklmnopqrstuvwxy" });
+    expect(missing).toMatchObject({ ok: false, error: { code: "NOT_FOUND" } });
+  });
+
+  it("deletes a user over the API", async () => {
+    const { session } = await createUser({ role: Role.ADMIN });
+    const { user: target } = await createUser();
+    signInAs(session);
+    expect(await deleteUserAction({ id: target.id })).toMatchObject({ ok: true });
+    expect(await prisma.user.findUnique({ where: { id: target.id } })).toBeNull();
+  });
+
+  it("changes the password via the API, revokes sessions and signs out", async () => {
+    const { user, session } = await createUser({ password: "Old1!Passw0rd" });
+    signInAs(session);
+    const wrong = await changePasswordAction({
+      currentPassword: "Nope1!Passw0rd",
+      newPassword: "N3w!Passw0rd",
+      confirmPassword: "N3w!Passw0rd",
+    });
+    expect(wrong).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
+    expect(signOut).not.toHaveBeenCalled();
+
+    const ok = await changePasswordAction({
+      currentPassword: "Old1!Passw0rd",
+      newPassword: "N3w!Passw0rd",
+      confirmPassword: "N3w!Passw0rd",
+    });
+    expect(ok.ok).toBe(true);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.tokenVersion).toBe(1);
+    expect(await verifyPassword("N3w!Passw0rd", after.passwordHash)).toBe(true);
+    expect(signOut).toHaveBeenCalledWith({ redirectTo: "/login?reason=password-changed" });
   });
 });

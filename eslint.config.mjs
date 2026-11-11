@@ -57,6 +57,35 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    // Strict-HTTP architecture: the view layer (pages, layouts, components,
+    // hooks, Server Actions, API gateway) reaches data ONLY through the REST
+    // API (`usersApi` → /api/users*). Services and repositories are reachable
+    // from Route Handler controllers alone.
+    files: [
+      "src/app/**/*.{ts,tsx}",
+      "src/components/**/*.{ts,tsx}",
+      "src/hooks/**/*.{ts,tsx}",
+      "src/modules/**/components/**/*.{ts,tsx}",
+      "src/modules/**/*.actions.ts",
+      "src/modules/**/*.api.ts",
+    ],
+    ignores: ["src/app/api/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/*.service", "**/*.repository", "**/lib/prisma", "@/lib/prisma"],
+              message:
+                "Views and Server Actions must call the REST API through the module's `*.api.ts` gateway, not services/repositories/Prisma (see ARCHITECTURE.md).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.test.{ts,tsx}", "tests/**/*.{ts,tsx}", "e2e/**/*.ts"],
     rules: {
       "max-lines-per-function": "off",
